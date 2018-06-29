@@ -3,10 +3,12 @@ const app        = express();
 const bodyParser = require('body-parser');
 const {ObjectId} = require('mongodb');
 const _          = require('lodash');
+const jwt        = require('jsonwebtoken');
 
 const {mongoose} = require('./database/db_connection');
 const {Todo}     = require('./models/todo');
 const {User}     = require('./models/user');
+const {authenticate} = require('./middleware/authenticate');
 
 app.use(bodyParser.json());
 //----------Todo routes------------
@@ -95,18 +97,22 @@ app.patch("/todos/:id", (req, res) => {
 
 
 //------Users Routes-------------
-app.post('/user', (req, res) => {
-    var newUser = new User({
-        email : req.body.email
-    })
+app.post('/users', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password'])
+    var newUser = new User(body);
 
     newUser.save().then((doc) => {
-        res.send(doc);
-    },(err) => {
+        return newUser.generateAuthToken()
+    }).then((token) => {
+        res.header('X-auth', token).send(newUser);
+    }).catch((err) => {
         res.status(400).send(err);
     });
 });
 
-
+//----------Private Route-------
+app.get('/users/me', authenticate, (req, res) => {
+    res.send(req.user);
+});
 
 app.listen(3000 , () => {console.log('server started')});

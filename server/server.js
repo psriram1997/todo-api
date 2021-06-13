@@ -138,4 +138,6 @@ app.delete('/users/me/token', authenticate, (req, res) => {
         res.status(400).send();
     });
 });
-app.listen(3000 , () => {console.log('server started')});
+app.listen(3000, () => {
+    console.log('server started');
+});
